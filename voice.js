@@ -1,3 +1,0 @@
-if(annyang) {
-    alert("boo");
-}
