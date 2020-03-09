@@ -23,19 +23,22 @@ app.set('view engine', 'handlebars');
 
 app.use(express.static('views/'));
 
-// Routes
-
+/** Handlebar Routes */
 app.get("/", function(req, res) {
     res.render("home.handlebars", {layout: false});
 });
 
-app.get("/draw", function(req, res) {
-    res.render("draw.handlebars", {layout: false});
+app.get("/draw/:flipbookName", function(req, res) {
+    res.render("draw.handlebars", {
+        layout: false,
+        flipbookName: req.params.flipbookName,
+    });
 });
 
+/** RESTful API routes **/
 // Returns the image from :flipbookName given :pageNum
 app.get("/flipbooks/:flipbookName/:pageNum", function(req, res) {
-    const flipBookName = req.params.flipBookName;
+    const flipbookName = req.params.flipbookName;
     const pageNum = req.params.pageNum;
     fs.readFile(public + flipbookName + "/" + pageNum + ".base64", function (err, data) {
         if(err) {
@@ -57,11 +60,13 @@ app.get("/numpages/:flipbookName", function(req, res) {
     }
 });
 
-app.post("/", function(req, res) {
+app.post("/flipbooks/:flipbookName/:pageNum", function(req, res) {
     // Decode base64 and then save the resulting image.
     //img = req.body.img.replace(/^data:image\/png;base64,/, "");
     img = req.body.img;
-    fs.writeFile(public + "test.base64", img, function (err) {
+    console.log(public + req.params.flipbookName + "/" + req.params.pageNum + ".base64");
+    
+    fs.writeFile(public + req.params.flipbookName + "/" + req.params.pageNum + ".base64", img, function (err) {
         if(err){
             console.log(err);
         } else {

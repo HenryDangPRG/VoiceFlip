@@ -1,8 +1,8 @@
 <html>
     <head>
         <Title>Voice Flip</title>
-        <script src="./resources/annyang.min.js"></script>
-        <script src="./resources/axios.js"></script>
+        <script src="../resources/annyang.min.js"></script>
+        <script src="../resources/axios.js"></script>
 
         <style>
             .nonSelectable {
@@ -32,6 +32,7 @@
             var lineWidth = 10;
             var strokeColor = "#000000";
             var pos = { x: 0, y: 0 };
+            var flipbookName = "";
 
             const validColors = {
                 "red": "#FF0000",
@@ -88,6 +89,9 @@
                     annyang.start()
                 }
 
+                flipbookName = document.getElementById("spanFlipbookName").innerHTML.trim()
+                this.fillMaxNumPages();
+                console.log("Flipbook name is: " + flipbookName);
                 canvas = document.getElementById("canvas");
                 document.body.style.margin = 0;
                 canvas.style.position = 'fixed';
@@ -103,6 +107,8 @@
                 document.addEventListener('mousemove', draw);
                 document.addEventListener('mousedown', setPosition);
                 document.addEventListener('mouseenter', setPosition);
+                document.addEventListener('mouseup', exportCanvas);
+                this.importCanvas();
             }
 
             // As soon as the user left clicks, pos is set to the current cursor position's
@@ -125,11 +131,24 @@
               ctx.stroke();
             }
 
+            function clearCanvas() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            function fillMaxNumPages() {
+                axios.get("http://127.0.0.1:10001/numpages/" + flipbookName).then(function (resp) {
+                    if(resp.data == "0") {
+                        document.getElementById("spanMaxPages").innerHTML = 1;
+                    } else {
+                        document.getElementById("spanMaxPages").innerHTML = resp.data;
+                    }
+                });
+            }
+
             function exportCanvas() {
-                //TODO: Need to get it out of dictionary form before you atob it.
                 pngImg = canvas.toDataURL("image/png");
-                //pngImg = pngImg.replace(" ", "+");
-                axios.post("http://127.0.0.1:10001", {
+                var currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                axios.post("http://127.0.0.1:10001/flipbooks/" + flipbookName + "/" + currentPage, {
                     img: pngImg,
                 }).then(function (response) {
                     console.log("Successfully saved image");
@@ -137,7 +156,8 @@
             }
 
             function importCanvas() {
-                axios.get("http://127.0.0.1:10001").then(function(resp) {
+                var currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                axios.get("http://127.0.0.1:10001/flipbooks/" + flipbookName + "/" + currentPage).then(function (resp) {
                     console.log(resp.data);
                     var image = new Image();
                     image.src = resp.data;
@@ -145,6 +165,36 @@
                         ctx.drawImage(image, 0, 0);
                     };
                 });
+            }
+
+            function createPage() {
+                // Save current canvas before making a new page
+                this.exportCanvas();
+                this.clearCanvas();
+                var currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                document.getElementById("spanCurrentPage").innerHTML = currentPage + 1;
+
+                var maxPage = parseInt(document.getElementById("spanMaxPages").innerHTML.trim());
+                document.getElementById("spanMaxPages").innerHTML = maxPage + 1;
+                // Export blank canvas to hold place
+                this.exportCanvas();
+
+            }
+
+            function nextPage() {
+                this.exportCanvas();
+                this.clearCanvas();
+                var currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                document.getElementById("spanCurrentPage").innerHTML = currentPage + 1;
+                this.importCanvas();
+            }
+
+            function previousPage() {
+                this.exportCanvas();
+                this.clearCanvas();
+                var currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                document.getElementById("spanCurrentPage").innerHTML = currentPage - 1;
+                this.importCanvas();
             }
 
         </script>
@@ -160,8 +210,15 @@
                 </p>
             </div>
         </div>
-        <button onClick="exportCanvas()">Test</button>
-        <button onClick="importCanvas()">Import Canvas</button>
+        <div>
+            <p>Flipbook name: <span id="spanFlipbookName">{{ flipbookName }}</span> </p>
+            <p>Page <span id="spanCurrentPage">1</span>/<span id="spanMaxPages">-1</span>
+            <button onClick="exportCanvas()">Test</button>
+            <button onClick="importCanvas()">Import Canvas</button>
+            <button onClick="createPage()">Create Page</button>
+            <button onClick="nextPage()">Next Page</button>
+            <button onClick="previousPage()">Previous Page</button>
+        </div>
     </body>
 
 </html>
