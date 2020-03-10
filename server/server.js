@@ -25,7 +25,24 @@ app.use(express.static('views/'));
 
 /** Handlebar Routes */
 app.get("/", function(req, res) {
-    res.render("home.handlebars", {layout: false});
+    res.render("home.handlebars", {
+        layout: false,
+        flipbooks: getFlipbookNames(),
+    });
+});
+
+app.get("/reference", function(req, res) {
+    res.render("reference.handlebars", {
+        layout: false,
+        flipbooks: getFlipbookNames(),
+    });
+});
+
+app.get("/create", function(req, res) {
+    res.render("create-flipbook.handlebars", {
+        layout: false,
+        flipbooks: getFlipbookNames(),
+    });
 });
 
 app.get("/draw/:flipbookName", function(req, res) {
@@ -33,6 +50,22 @@ app.get("/draw/:flipbookName", function(req, res) {
         layout: false,
         flipbookName: req.params.flipbookName,
     });
+});
+
+app.get("/flipbookinfo/:flipbookName", function(req, res) {
+    var numPages = "";
+    try {
+        var files = fs.readdirSync(public + req.params.flipbookName);
+        numPages = files.length.toString();
+    } catch(err) {
+        numPages = "0";
+    }
+    res.render("home-selected.handlebars", {
+        layout: false,
+        flipbooks: getFlipbookNames(),
+        flipbookName: req.params.flipbookName,
+        numPages: numPages,
+    })
 });
 
 /** RESTful API routes **/
@@ -58,6 +91,20 @@ app.get("/numpages/:flipbookName", function(req, res) {
     } catch(err) {
         res.send("0");
     }
+});
+
+app.get("/delete/:flipbookName/:pageNum", function(req, res) {
+    const flipbookName = req.params.flipbookName;
+    const pageNum = req.params.pageNum;
+    fs.unlink(public + flipbookName + "/" + pageNum + ".base64", function(err) {
+        if(err){
+            res.send("ERROR: Cannot delete file");
+            console.log("File doesn't exist : " + err);
+        } else {
+            res.send("File successfully deleted.");
+            console.log("Successfully deleted page " + pageNum + " from " + flipbookName);
+        }
+    });
 });
 
 app.post("/flipbooks/:flipbookName/:pageNum", function(req, res) {

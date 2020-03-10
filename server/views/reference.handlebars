@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>VoiceFlip</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="../resources/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body style="padding-top: 56px">
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="/">VoiceFlip</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="/">Home
+              <span class="sr-only">(current)</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <div class="container">
+
+    <div class="row">
+
+      <div class="col-lg-3">
+
+        <h1 class="my-4">Flipbooks</h1>
+        <div class="list-group">
+          {{#each flipbooks}}
+          <a href="flipbookinfo/{{this}}" class="list-group-item">{{this}}</a>
+          {{/each}}
+        </div>
+
+      </div>
+      <!-- /.col-lg-3 -->
+
+      <div class="col-lg-9">
+
+		<div class="ml-3 mt-3 mb-3 w-100">
+            <h1>Reference Guide</h1>
+            <hr/>
+
+            <h2>Non-Voice Commands</h2>
+            <p>
+                VoiceFlip has two buttons in the draw screen. These two buttons are <b>"Exit"</b> and <b>"Mute"</b>. 
+                When you click <b>"Exit"</b>, you will be redirected back to the home page, and when you click
+                <b>"Mute"</b>, VoiceFlip will stop recognizing your commands.
+            </p>
+
+            <p>
+                When you hit <b>"Mute"</b>, the command bar at the bottom will say "VoiceFlip is muted".
+                If you hit <b>"Mute"</b> again while VoiceFlip is muted, it will unmute, and the command bar
+                at the bottom will say "VoiceFlip is unmuted. Awaiting command". You will then be able to
+                input any of the voice commands listed below.
+            </p>
+            <hr/>
+
+            <h2 class="mt-4">General Voice Commands</h2>
+
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <th scope="col">Command</th>
+                    <th scope="col">Result</th>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Size [very big, big, medium, small, very small]</td>
+                        <td>Changes the brush size</td>
+                    </tr>
+                    <tr>
+                        <td>Next Page</td>
+                        <td>Goes to the next page in the flipbook</td>
+                    </tr>
+                    <tr>
+                        <td>Previous Page</td>
+                        <td>Goes to the previous page in the flipbook</td>
+                    </tr>
+                    <tr>
+                        <td>Play Slow</td>
+                        <td>Plays the entire flipbook from start to finish at 3 pages per second</td>
+                    </tr>
+                    <tr>
+                        <td>Play Medium</td>
+                        <td>Plays the entire flipbook from start to finish at 5 pages per second</td>
+                    </tr>
+                    <tr>
+                        <td>Play Fast</td>
+                        <td>Plays the entire flipbook from start to finish at 10 pages per second</td>
+                    </tr>
+                    <tr>
+                        <td>Create Page</td>
+                        <td>Creates a new page at the end of your flipbook</td>
+                    </tr>
+                    <tr>
+                        <td>Delete Page</td>
+                        <td>Deletes the page at the very end of your flipbook. Requires user confirmation.</td>
+                    </tr>
+                    <tr>
+                        <td>Erase</td>
+                        <td>Sets your current brush color to white so that it erases.</td>
+                    </tr>
+                    <tr>
+                        <td>Clear Canvas</td>
+                        <td>Wipes the canvas. Requires user confirmation.</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <hr/>
+            <h1 class="mt-2"> Color Voice Commands </h1>
+            <p>All color commands will change the color of your brush</p>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <th scope="col">Command</th>
+                    <th scope="col">Result</th>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Color green</td>
+                        <td>Changes the brush color to
+                            <svg width="30" height="30">
+                            <rect width="30" height="30" style="fill:#00FF00" />
+                            </svg> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Color red</td>
+                        <td>Changes the brush color to
+                            <svg width="30" height="30">
+                            <rect width="30" height="30" style="fill:#FF0000" />
+                            </svg> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Color blue</td>
+                        <td>Changes the brush color to
+                            <svg width="30" height="30">
+                            <rect width="30" height="30" style="fill:#0000FF" />
+                            </svg> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Color black</td>
+                        <td>Changes the brush color to
+                            <svg width="30" height="30">
+                            <rect width="30" height="30" style="fill:#000000" />
+                            </svg> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Color orange</td>
+                        <td>Changes the brush color to
+                            <svg width="30" height="30">
+                            <rect width="30" height="30" style="fill:#fcba03" />
+                            </svg> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Color purple</td>
+                        <td>Changes the brush color to
+                            <svg width="30" height="30">
+                            <rect width="30" height="30" style="fill:#a60dff" />
+                            </svg> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Color brown</td>
+                        <td>Changes the brush color to
+                            <svg width="30" height="30">
+                            <rect width="30" height="30" style="fill:#694931" />
+                            </svg> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Color yellow</td>
+                        <td>Changes the brush color to
+                            <svg width="30" height="30">
+                            <rect width="30" height="30" style="fill:#fce217" />
+                            </svg> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Color cyan</td>
+                        <td>Changes the brush color to
+                            <svg width="30" height="30">
+                            <rect width="30" height="30" style="fill:#17fce1" />
+                            </svg> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Color white</td>
+                        <td>Changes the brush color to white</td>
+                    </tr>
+                </tbody>
+            </table>
+		</div>
+
+
+        </div>
+        <!-- /.row -->
+
+      </div>
+      <!-- /.col-lg-9 -->
+
+    </div>
+    <!-- /.row -->
+
+  </div>
+  <!-- /.container -->
+
+  <!-- Footer -->
+  <div class="py-5 bg-dark">
+    <div class="container">
+      <p class="m-0 text-center text-white">Copyright &copy; Henry Dang 2020</p>
+    </div>
+    <!-- /.container -->
+  </div>
+
+  <!-- Bootstrap core JavaScript -->
+  <script src="../resources/jquery.min.js"></script>
+  <script src="../resources/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
+

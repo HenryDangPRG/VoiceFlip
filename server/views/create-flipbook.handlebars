@@ -12,6 +12,28 @@
 
   <!-- Bootstrap core CSS -->
   <link href="../resources/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <script src="../resources/axios.js"></script>
+  <script 
+
+    <script>
+        function createFlipbook() {
+            var flipbookName = document.getElementById("inputFlipbookName").value;
+            if(flipbookName.trim() == "") {
+                alert("Flipbook name must not be empty");
+                return;
+            }
+            console.log("Flipbook provided name is " + flipbookName);
+            axios.get("http://127.0.0.1:10001/createfolder/" + flipbookName).then(function (resp) {
+                if(resp.data.includes("ERROR")) {
+                    alert(resp.data); 
+                } else {
+                    //window.location.href = "/draw"; 
+                    //document.getElementById
+                    //TODO: We can cut corners by just setting some paragraph instead of using a database.
+                }
+            });
+        }
+    </script>
 </head>
 
 <body style="padding-top: 56px">
@@ -54,22 +76,10 @@
 
       <div class="col-lg-9">
 
-		<div class="row mt-3 mb-3 w-100">
-            <div class="jumbotron w-100">
-                  <h1 class="display-4">Welcome to VoiceFlip!</h1>
-                  <p class="lead">VoiceFlip is a voice controlled flipbook creator! If you've created any flipbooks using VoiceFlip
-                                  in the past, they will be shown on the left side of the screen.
-                                  </p>
-                  <hr class="my-4">
-                  <p class="lead">If you are a new user, we suggest you take a quick look at our reference guide. Almost all commands used in VoiceFlip
-                     are controlled with your voice, so we suggest you take a look at the list of commands before attempting
-                     to create your own flipbook. </p>
-                  <a class="btn btn-primary btn-lg" href="/reference" role="button">Reference Guide</a>
-                  <hr class="my-4">
-                  <p class="lead">Once you're comfortable with the list of commands, you're now ready to create your very own flipbook!</p>
-                  <a class="btn btn-primary btn-lg" href="/create" role="button">Create Your Own Flipbook</a>
-            </div>
-
+		<div class="mt-3 mb-3 w-100">
+            <h1>Create Your Own Flipbook</h1>
+            <input id="inputFlipbookName" type="text" placeholder="Flipbook Name">
+            <button class="btn btn-primary" onclick="createFlipbook()">Create</button>
 		</div>
 
 

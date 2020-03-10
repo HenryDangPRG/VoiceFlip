@@ -3,6 +3,9 @@
         <Title>Voice Flip</title>
         <script src="../resources/annyang.min.js"></script>
         <script src="../resources/axios.js"></script>
+        <script src="../resources/jquery.min.js"></script>
+        <script src="../resources/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <link href="../resources/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
         <style>
             .nonSelectable {
@@ -18,26 +21,51 @@
                 font-family: Helvetica, Arial, sans-serif;
                 text-align: center;
                 font-size: 300%;
-                line-height: 0%;
+                line-height: 150%;
             }
 
             .bordered {
                 border: solid gray 3px;
                 border-radius: 25px;
             }
+
+            .border-canvas {
+                border: solid black 3px; 
+            }
+
+            .bordered-blue {
+                border: solid #638bd6 4px;
+                border-radius: 30px;
+            }
         </style>
         <script>
+            var isMuted = false;
             var canvas;
             var ctx;
             var lineWidth = 10;
             var strokeColor = "#000000";
             var pos = { x: 0, y: 0 };
             var flipbookName = "";
+            var currentPage = -1;
+            var maxPage = -1;
+
+            const validSpeeds = {
+                "slow": 333,
+                "medium": 200,
+                "fast": 100,
+            }
 
             const validColors = {
+                "black": "#000000",
                 "red": "#FF0000",
                 "blue": "#0000FF",
-                "green": "#00FF00"
+                "green": "#00FF00",
+                "white": "#FFFFFF",
+                "orange": "#fcba03",
+                "purple": "#a60dff",
+                "brown": "#694931",
+                "yellow": "#fce217",
+                "cyan": "#17fce1",
             }
 
             const validSizes = {
@@ -52,7 +80,14 @@
             // the keys are non-integer, they are guaranteed to be in order
             const commands = {
                 "size *width": changeSize,
+                "erase" : setErase,
                 "color *color": changeColor, 
+                "create page": createPage,
+                "previous page": previousPage,
+                "next page": nextPage,
+                "delete page": deleteLastPage,
+                "play *speed": play,
+                "clear canvas": clearCanvasConfirmation,
                 "*unknown": unknownCommand,
             }
 
@@ -61,26 +96,47 @@
                 if(size in validSizes) {
                     lineWidth = validSizes[size];
                     updateLastCommandText("size " + size);
+                    updateBrushSizeText(size);
                 } else {
                     unknownCommand("size " + size);
                 }
             }
             
+            function updateColorText(color) {
+                document.getElementById("spanCurrentColor").innerHTML = color;
+            }
+
+            function updateBrushSizeText(size) {
+                document.getElementById("spanCurrentSize").innerHTML = size;
+            }
+
             function unknownCommand(unknown) {
                 updateLastCommandText("Unknown command: " + unknown);
             }
             function updateLastCommandText(text) {
-                document.getElementById("pLastCommand").innerHTML = text;
+                if(text.length <= 60) {
+                    document.getElementById("pLastCommand").innerHTML = text;
+                } else {
+                    document.getElementById("pLastCommand").innerHTML = text.substring(0, 60) + "...";
+                }
             }
 
             function changeColor(color) {
+                color = color.toLowerCase();
                 var command = "color " + color;
                 if(color.toLowerCase() in validColors) {
                     strokeColor = validColors[color];
                     updateLastCommandText(command);
+                    updateColorText(color);
                 } else {
                     updateLastCommandText("Unknown command: " + command);
                 }
+            }
+
+            function setErase() {
+                strokeColor = validColors["white"];
+                updateColorText("white");
+                updateLastCommandText("erase");
             }
 
             function init() {
@@ -96,8 +152,8 @@
                 document.body.style.margin = 0;
                 canvas.style.position = 'fixed';
                 ctx = canvas.getContext('2d');
-                height = window.innerHeight - 200;
-                width = window.innerWidth - 200;
+                height = window.innerHeight - 250;
+                width = window.innerWidth;
                 ctx.canvas.width = width;
                 ctx.canvas.height = height;
                 ctx.lineCap = "round"
@@ -109,6 +165,7 @@
                 document.addEventListener('mouseenter', setPosition);
                 document.addEventListener('mouseup', exportCanvas);
                 this.importCanvas();
+                maxPage = parseInt(document.getElementById("spanMaxPages").innerHTML.trim());
             }
 
             // As soon as the user left clicks, pos is set to the current cursor position's
@@ -147,18 +204,20 @@
 
             function exportCanvas() {
                 pngImg = canvas.toDataURL("image/png");
-                var currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                maxPage = parseInt(document.getElementById("spanMaxPages").innerHTML.trim());
+                currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
                 axios.post("http://127.0.0.1:10001/flipbooks/" + flipbookName + "/" + currentPage, {
                     img: pngImg,
                 }).then(function (response) {
-                    console.log("Successfully saved image");
+
                 });
             }
 
             function importCanvas() {
-                var currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                maxPage = parseInt(document.getElementById("spanMaxPages").innerHTML.trim());
                 axios.get("http://127.0.0.1:10001/flipbooks/" + flipbookName + "/" + currentPage).then(function (resp) {
-                    console.log(resp.data);
+                    //console.log(resp.data);
                     var image = new Image();
                     image.src = resp.data;
                     image.onload = function() {
@@ -171,53 +230,148 @@
                 // Save current canvas before making a new page
                 this.exportCanvas();
                 this.clearCanvas();
-                var currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
                 document.getElementById("spanCurrentPage").innerHTML = currentPage + 1;
 
-                var maxPage = parseInt(document.getElementById("spanMaxPages").innerHTML.trim());
+                maxPage = parseInt(document.getElementById("spanMaxPages").innerHTML.trim());
                 document.getElementById("spanMaxPages").innerHTML = maxPage + 1;
                 // Export blank canvas to hold place
                 this.exportCanvas();
+                this.updateLastCommandText("Create page");
 
             }
 
-            function nextPage() {
-                this.exportCanvas();
-                this.clearCanvas();
-                var currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
-                document.getElementById("spanCurrentPage").innerHTML = currentPage + 1;
-                this.importCanvas();
+            function nextPage(quiet = false) {
+                maxPage = parseInt(document.getElementById("spanMaxPages").innerHTML.trim());
+                if(currentPage != maxPage) {
+                    this.exportCanvas();
+                    this.clearCanvas();
+                    document.getElementById("spanCurrentPage").innerHTML = currentPage + 1;
+                    currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                    this.importCanvas();
+                }
+
+                if(!quiet) {
+                    this.updateLastCommandText("Next page");
+                }
             }
 
-            function previousPage() {
-                this.exportCanvas();
-                this.clearCanvas();
-                var currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
-                document.getElementById("spanCurrentPage").innerHTML = currentPage - 1;
-                this.importCanvas();
+            function previousPage(quiet = false) {
+                if(currentPage > 1) {
+                    this.exportCanvas();
+                    this.clearCanvas();
+                    document.getElementById("spanCurrentPage").innerHTML = currentPage - 1;
+                    currentPage = parseInt(document.getElementById("spanCurrentPage").innerHTML.trim());
+                    this.importCanvas();
+                }
+
+                if(!quiet) {
+                    this.updateLastCommandText("Previous page");
+                }
+            }
+
+            function mute() {
+                if(isMuted) {
+                    annyang.resume();
+                    updateLastCommandText("VoiceFlip is now unmuted. Awaiting command.");
+                } else {
+                    annyang.pause();
+                    updateLastCommandText("VoiceFlip is muted.");
+                }
+                isMuted = !isMuted;
+            }
+
+            function play(speed) {
+                if(speed in validSpeeds) {
+                    updateLastCommandText("play " + speed);
+                    // Reset user to first page
+                    this.exportCanvas();
+                    this.clearCanvas();
+                    document.getElementById("spanCurrentPage").innerHTML = "1";
+                    this.importCanvas();
+
+                    var timer = setInterval(function() {
+                        console.log(currentPage + " and " + maxPage);
+                        if(currentPage >= maxPage) {
+                            clearInterval(timer);
+                        } else {
+                            this.nextPage(true);
+                        }
+                    }, validSpeeds[speed]);
+                } else {
+                    unknownCommand("play " + speed);
+                }
+            }
+
+            function deleteLastPage() {
+                updateLastCommandText("Delete page");
+                maxPage = parseInt(document.getElementById("spanMaxPages").innerHTML.trim());
+                var confirmation = confirm("You are about to delete the last page in your flipbook. Are you sure?"); 
+                if(confirmation === true && maxPage > 0) {
+                    console.log("Deleted last page.");
+                    axios.get("http://127.0.0.1:10001/delete/" + flipbookName + "/" + maxPage).then(function(resp) {
+                        if(currentPage == maxPage) {
+                            currentPage -= 1
+                            clearCanvas();
+                        }
+                        maxPage -= 1;
+                        document.getElementById("spanMaxPages").innerHTML = maxPage;
+                        document.getElementById("spanCurrentPage").innerHTML = currentPage;
+                        console.log(maxPage);
+
+                        importCanvas();
+                    });
+                }
+            }
+
+            function clearCanvasConfirmation() {
+                var confirmation = confirm("You are about to clear the canvas. Are you sure?");
+                updateLastCommandText("Clear canvas");
+                if(confirmation) {
+                    clearCanvas();
+                }
             }
 
         </script>
     </head>
     <body onload="init()">
         <div>
-            <div id="canvasDiv">
+            <div id="canvasDiv" class="border-canvas">
                 <canvas id="canvas"></canvas>
             </div>
             <div class="bordered">
-                <p id="pLastCommand" class="nonSelectable">
+                <p id="pLastCommand" class="nonSelectable pt-2">
                     Awaiting Voice Command (try saying "color red")
                 </p>
             </div>
         </div>
-        <div>
-            <p>Flipbook name: <span id="spanFlipbookName">{{ flipbookName }}</span> </p>
-            <p>Page <span id="spanCurrentPage">1</span>/<span id="spanMaxPages">-1</span>
-            <button onClick="exportCanvas()">Test</button>
-            <button onClick="importCanvas()">Import Canvas</button>
-            <button onClick="createPage()">Create Page</button>
-            <button onClick="nextPage()">Next Page</button>
-            <button onClick="previousPage()">Previous Page</button>
+        <div class="container-fluid mt-2">
+            <div class="row mx-4">
+                <div class="col-2 bordered-blue mr-3">
+                    <big><p class="mt-3 text-center">Flipbook name: <span id="spanFlipbookName">{{ flipbookName }}</span> </p></big>
+                    <big><p class="mt-3 text-center">Page <span id="spanCurrentPage">1</span>/<span id="spanMaxPages">-1</span></p></big>
+                </div>
+                <div class="col-3 bordered-blue mr-3">
+                    <div class="box h-100 d-flex justify-content-center flex-column">
+                        <big><p class="text-center">Color is: <span id="spanCurrentColor">black</span></p></big>
+                    </div>
+                </div>
+                <div class="col-3 bordered-blue mr-3">
+                    <div class="box h-100 d-flex justify-content-center flex-column">
+                        <big><p class="text-center">Brush Size is <span id="spanCurrentSize">medium</span></p></big>
+                    </div>
+                </div>
+                <div class="ml-5 col-1">
+                    <div class="box h-100 d-flex justify-content-center flex-column">
+                        <button class="btn btn-primary" onClick="mute()">Mute</button>
+                    </div>
+                </div>
+                <div class="ml-5 col-1">
+                    <div class="box h-100 d-flex justify-content-center flex-column">
+                        <button class="btn btn-danger" onclick="window.location.href = '/'">Exit</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </body>
 
